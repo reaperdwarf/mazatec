@@ -1,0 +1,7 @@
+{
+  "name": "Mazatec Companion",
+  "description": "A specialized companion app for Salvia divinorum cultivation, tracking hydration, rooting cycles, and visual diagnostics.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

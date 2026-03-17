@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Plant": {
+      "title": "Plant",
+      "description": "A Salvia divinorum specimen being tracked.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "nickname": { "type": "string" },
+        "status": { "type": "string", "enum": ["Rooting", "Hardening", "Vegetative", "Mother", "Dormant"] },
+        "dateAcquired": { "type": "string", "format": "date-time" },
+        "lastWatered": { "type": "string", "format": "date-time" },
+        "rootingStartedAt": { "type": "string", "format": "date-time" },
+        "imageUrl": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "nickname", "status"]
+    },
+    "Log": {
+      "title": "Cultivation Log",
+      "description": "An entry in a plant's history (watering, feeding, diagnostics).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "plantId": { "type": "string" },
+        "type": { "type": "string", "enum": ["Water", "Inoculation", "Diagnostic", "Pruning", "Repotting"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "note": { "type": "string" },
+        "photoUri": { "type": "string" },
+        "symptomMatch": { "type": "string" }
+      },
+      "required": ["id", "plantId", "type", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents."
+    },
+    "/plants/{plantId}": {
+      "schema": "Plant",
+      "description": "Plant documents."
+    },
+    "/plants/{plantId}/logs/{logId}": {
+      "schema": "Log",
+      "description": "Logs for a specific plant."
+    }
+  }
+}

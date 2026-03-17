@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Fields: uid, email, displayName, createdAt
+    //
+    // Collection: plants
+    // Fields: id, ownerId, nickname, status, dateAcquired, lastWatered, rootingStartedAt, notes, createdAt
+    //
+    // Collection: plants/{plantId}/logs
+    // Fields: id, plantId, type, timestamp, note, photoUri, symptomMatch
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isPlantOwner(plantId) {
+      return isAuthenticated() && request.auth.uid == get(/databases/$(database)/documents/plants/$(plantId)).data.ownerId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid is string && data.email is string;
+    }
+
+    function isValidPlant(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'nickname', 'status']) &&
+             data.ownerId == request.auth.uid &&
+             data.status in ['Rooting', 'Hardening', 'Vegetative', 'Mother', 'Dormant'];
+    }
+
+    function isValidLog(data) {
+      return data.keys().hasAll(['id', 'plantId', 'type', 'timestamp']) &&
+             data.type in ['Water', 'Inoculation', 'Diagnostic', 'Pruning', 'Repotting'];
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    match /plants/{plantId} {
+      allow read: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidPlant(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.ownerId == request.auth.uid && isValidPlant(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+
+      match /logs/{logId} {
+        allow read: if isPlantOwner(plantId);
+        allow create: if isPlantOwner(plantId) && isValidLog(request.resource.data);
+        allow update: if isPlantOwner(plantId) && isValidLog(request.resource.data);
+        allow delete: if isPlantOwner(plantId);
+      }
+    }
+  }
+}
